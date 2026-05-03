@@ -65,10 +65,14 @@ if (mode !== "export") {
     ];
   };
 
-  nextConfig.rewrites = async () => {
+nextConfig.rewrites = async () => {
     const ret = [
-      // 3. 核心修改：将 OpenAI 的请求直接转发到 funcloud 的官方路径
-      // 这样可以解决 NextChat 自动加 /v1 导致的路径冲突
+      // 1. 专门拦截 NextChat 内部 API 路由，解决 path no route 问题
+      {
+        source: "/api/openai/v1/:path*",
+        destination: "https://api.funcloud.ai/v1/official/:path*",
+      },
+      // 2. 保持对其他路径的兼容
       {
         source: "/api/proxy/openai/v1/:path*",
         destination: "https://api.funcloud.ai/v1/official/:path*",
@@ -77,22 +81,18 @@ if (mode !== "export") {
         source: "/api/proxy/openai/:path*",
         destination: "https://api.funcloud.ai/v1/official/:path*",
       },
-      // 4. Anthropic (Claude) 的路径对齐
+      // 3. Azure/Google 等其他配置保持不变
       {
-        source: "/api/proxy/anthropic/v1/:path*",
-        destination: "https://api.funcloud.ai/v1/official/v1/:path*",
+        source: "/api/proxy/azure/:resource_name/deployments/:deploy_name/:path*",
+        destination: "https://:resource_name.openai.azure.com/openai/deployments/:deploy_name/:path*",
       },
       {
         source: "/api/proxy/google/:path*",
         destination: "https://generativelanguage.googleapis.com/:path*",
       },
       {
-        source: "/google-fonts/:path*",
-        destination: "https://fonts.googleapis.com/:path*",
-      },
-      {
-        source: "/sharegpt",
-        destination: "https://sharegpt.com/api/conversations",
+        source: "/api/proxy/anthropic/:path*",
+        destination: "https://api.funcloud.ai/v1/official/v1/:path*",
       },
     ];
 
